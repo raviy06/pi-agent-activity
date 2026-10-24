@@ -10,6 +10,7 @@ const states: State[] = ["queued", "running", "paused", "stopping", "completed",
 export function safeText(text: string, limit = 256): string {
   return stripVTControlCharacters(text.slice(0, 4096))
     // Remove control characters and bidi overrides; preserve ordinary Unicode labels.
+    // eslint-disable-next-line no-control-regex -- control bytes are the sanitizer's target
     .replace(/[\u0000-\u001f\u007f-\u009f\u061c\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, " ")
     .replace(/\s+/gu, " ").trim().slice(0, limit)
 }
