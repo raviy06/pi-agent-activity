@@ -43,7 +43,9 @@ queues an `npm` environment deployment. Manual main-only dispatch supports retry
 but still verifies successful CI for the exact commit. The publisher reruns
 validation/tests/build, checks scoped package identity, and queries the registry.
 Only HTTP 404 means unpublished; auth/rate/server failures stop the workflow.
-An existing version is not republished.
+An existing version is not republished. A superseded main commit is rejected,
+and a new publication must be newer than npm's current `latest` version, so
+out-of-order CI completions cannot downgrade the npm dist-tag.
 
 With environment approval, npm trusted publishing issues a short-lived token via
 GitHub OIDC. Publication uses `--provenance --access public`, then creates the
