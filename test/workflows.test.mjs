@@ -2,11 +2,11 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
 
-test("PR CI is read-only, exposes an aggregate check, and verifies package policy",()=>{
- const workflow=fs.readFileSync(".github/workflows/ci.yml","utf8");
+for(const newline of ["\n","\r\n"])test(`PR CI policy works with ${newline.length===1?"LF":"CRLF"} checkouts`,()=>{
+ const workflow=fs.readFileSync(".github/workflows/ci.yml","utf8").replace(/\r?\n/g,newline);
  assert.match(workflow,/pull_request:/);
- assert.match(workflow,/permissions:\n {2}contents: read/);
- assert.match(workflow,/name: CI\n {4}if: always\(\)/);
+ assert.match(workflow,/permissions:\r?\n {2}contents: read/);
+ assert.match(workflow,/name: CI\r?\n {4}if: always\(\)/);
  assert.match(workflow,/npm run check:release -- --base/);
  assert.match(workflow,/npm run lint/);
  assert.match(workflow,/npm run typecheck/);
