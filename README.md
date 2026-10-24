@@ -1,7 +1,8 @@
 # Pi Agent Activity
 
 A read-only companion connecting the fork's structured subagent activity API to
-pi-minimal's footer. This is a private, unpublished development package.
+pi-minimal's footer. The public source checkout is npm-private; a publishable
+artifact is built separately. Publication status must be verified on npm.
 
 ## Requirements
 
@@ -65,9 +66,12 @@ start no monitor or footer client.
 
 ```sh
 npm ci --ignore-scripts
+npm run lint
 npm run typecheck
 npm test
 npm run build
+npm run build:pkg
+npm run check:release -- --packed
 python3 scripts/smoke.py \
   --minimal /absolute/path/to/pi-minimal/dist/index.js \
   --fork /absolute/path/to/pi-subagents/dist-pkg/bundle/index.js
@@ -97,6 +101,8 @@ of completed live, model-backed subagent lifecycle testing.
 5. For rollback disable this companion, restore the recorded provider/visual
    settings, and restart the session. No agent or task data is deleted.
 
-Neither this companion nor the fork has been published by this work. npm scope
-ownership/trusted publishing still requires setup. Every new extension PR must
-carry an appropriate version/changelog update before it is opened.
+See [RELEASING.md](RELEASING.md) for PR checks, artifact packaging, automatic
+CI-gated main releases and npm trusted-publisher setup. Every new extension PR
+must carry an appropriate version/changelog update before it is opened.
+Adding the workflows does not itself publish either package or configure npm
+scope ownership.
