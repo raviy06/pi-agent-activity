@@ -1,0 +1,21 @@
+{
+  "name": "@raviy06/pi-agent-activity",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Read-only pi-subagents activity companion for pi-minimal",
+  "license": "MIT",
+  "engines": { "node": ">=22.19.0" },
+  "pi": { "extensions": ["./dist/index.js"] },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "tsc -p tsconfig.tests.json && node --test test-dist/test/*.test.js"
+  },
+  "peerDependencies": { "@earendil-works/pi-coding-agent": ">=1.4.0" },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "1.4.0",
+    "@types/node": "24.13.3",
+    "typescript": "5.9.3"
+  }
+}
