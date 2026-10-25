@@ -34,8 +34,15 @@ export default function activityExtension(pi: ExtensionAPI): void {
       })
       footer.publish({ rows, omitted, format, motion })
     }
-    const monitor = new ActivityMonitor(rpc, store, render)
-    const off = ["subagents:rpc:v1:ready", "subagent:child-status", "subagent:async-complete"].map(event => pi.events.on(event, () => monitor.nudge()))
+    const off: Array<() => void> = []
+    let changeSubscribed: string | undefined
+    const monitor = new ActivityMonitor(rpc, store, render, undefined, changeEvent => {
+      // Fork 0.83+ advertises a coalesced change event; subscribe once and let it drive refreshes.
+      if (!alive || !changeEvent || changeEvent === changeSubscribed) return
+      changeSubscribed = changeEvent
+      off.push(pi.events.on(changeEvent, () => monitor.nudge()))
+    })
+    off.push(...["subagents:rpc:v1:ready", "subagent:child-status", "subagent:async-complete"].map(event => pi.events.on(event, () => monitor.nudge())))
     active = {
       id, store, footer, monitor, render,
       togglePlain() { format = format === "icons" ? "plain" : "icons"; render() },
