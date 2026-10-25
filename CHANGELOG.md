@@ -1,12 +1,25 @@
 # Changelog
 
-## [0.1.3] - 2026-10-25
+## [Unreleased]
+
+### Fixed
+
+- Create GitHub Releases as drafts, upload and verify package assets, then publish
+  them. This avoids HTTP 422 when immutable releases reject post-publication uploads.
+- Verify asset name, upload state, size and SHA-256 digest before finalization;
+  resume matching drafts safely and avoid modifying published immutable releases.
+- Resolve actual lightweight/annotated tag commits before and after publication;
+  reject source mismatches without retagging instead of trusting creation metadata.
+- Require exactly one nonempty, dated changelog section for the release version,
+  handling LF/CRLF and rejecting missing, duplicate or empty notes before publication.
 
 ### Changed
 
-- Update ESLint from 10.11.0 to 10.13.0 and typescript-eslint from 8.70.1 to
-  8.72.0. Keep the compiler within the parser's declared supported peer range.
-- Runtime code and dependencies are unchanged by this development-tool update.
+- Ordinary PRs no longer require version bumps or new changelog entries. Prepare
+  grouped versioned notes in a dedicated release PR.
+- Skip publication and npm approval for main pushes without a package-version
+  change; verify release intent from successful same-commit main CI before the
+  protected publisher runs. OIDC publication remains unverified end-to-end.
 
 ## [0.1.1] - 2026-10-25
 

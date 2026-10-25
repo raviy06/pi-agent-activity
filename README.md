@@ -102,7 +102,8 @@ of completed live, model-backed subagent lifecycle testing.
    settings, and restart the session. No agent or task data is deleted.
 
 See [RELEASING.md](RELEASING.md) for PR checks, artifact packaging, automatic
-CI-gated main releases and npm trusted-publisher setup. Every new extension PR
-must carry an appropriate version/changelog update before it is opened.
+CI-gated main releases and npm trusted-publisher setup. Ordinary PRs do not need
+version or changelog changes. A release PR versions the grouped changes and adds
+the batch changelog; unchanged-version main pushes never request publication.
 Adding the workflows does not itself publish either package or configure npm
 scope ownership.
