@@ -2,10 +2,12 @@
 
 ## PR contract
 
-Every new extension PR must bump the package version. Synchronize `package.json`,
-both root package-lock versions, and a dated CHANGELOG section. The prepared
-version must be newer than the PR base. Only stable `MAJOR.MINOR.PATCH` release
-versions are supported by this initial pipeline. Dependabot PRs also need a bump.
+Ordinary feature, dependency, test and documentation PRs keep the current package
+version and do not require a new changelog entry. Merge reviewed changes, then
+prepare one release PR that bumps `package.json` and both root lockfile versions
+and adds a dated changelog summarizing the batch. Only stable `MAJOR.MINOR.PATCH`
+versions are supported. Unchanged versions pass PR validation; downgrades fail.
+A changed version requires the matching dated changelog entry.
 
 The aggregate **CI** check requires:
 - ESLint, TypeScript checking, unit tests and build on Node 22.19/24 and Windows.
@@ -38,9 +40,18 @@ npm pack ./dist-pkg --ignore-scripts
 
 ## Publishing flow
 
-After **CI succeeds on a push to main**, Publish checks out that exact commit and
-queues an `npm` environment deployment. Manual main-only dispatch supports retry,
-but still verifies successful CI for the exact commit. The publisher reruns
+Main push CI records the push's before/after package versions in a small
+`release-intent` artifact. This compares the whole push, including multi-commit
+or rebase merges, not merely HEAD's first parent. After **CI succeeds**, Publish's
+read-only detection job verifies the CI run identity and recomputes the artifact
+against the exact Git objects. An unchanged version skips the publisher entirely:
+no npm approval request, registry publication or GitHub release.
+
+Only a verified version-changing push queues an `npm` environment deployment.
+Manual main-only dispatch uses the same successful CI run and saved intent; it
+cannot force a release from an ordinary commit. Missing/invalid artifacts fail
+closed. The current-main check still applies: do not advance main while a release
+awaits approval; a superseded release needs a fresh release PR. The publisher reruns
 validation/tests/build, checks scoped package identity, and queries the registry.
 Only HTTP 404 means unpublished; auth/rate/server failures stop the workflow.
 An existing version is not republished. A superseded main commit is rejected,
@@ -48,13 +59,21 @@ and a new publication must be newer than npm's current `latest` version, so
 out-of-order CI completions cannot downgrade the npm dist-tag.
 
 With environment approval, npm trusted publishing issues a short-lived token via
-GitHub OIDC. Publication uses `--provenance --access public`, then creates the
-`v<version>` GitHub release and uploads a tarball. Write/id-token permissions exist
+GitHub OIDC. Publication uses `--provenance --access public`. The GitHub release
+is created as a **draft** with the exact version's nonempty changelog, then the
+package tarball is uploaded and its name/state/size/SHA-256 verified before the
+release is made public. Existing remote tags are resolved to their actual commit
+(peeling annotated tags), checked before publication and verified again afterward.
+Creation metadata alone is not source proof. Mismatches stop without retagging.
+This order supports GitHub's immutable releases. Write/id-token permissions exist
 only in the main-only publish job. No registry-url placeholder npm token is used.
 
 A failed publication can be retried from main after correcting account setup. If
-npm accepted the version but GitHub release creation failed, a retry skips npm
-and finishes release metadata. Never overwrite a published version.
+npm accepted the version but GitHub draft creation/upload failed, a retry skips
+npm and resumes the matching draft. A complete published release is verified
+without mutation. An already-published immutable release with missing assets
+cannot be repaired by uploading afterward: leave it intact and create a new
+version. Never delete/retag an immutable release or overwrite a published version.
 
 ## Required owner setup
 
