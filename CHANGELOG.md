@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.4] - 2026-10-25
+
+### Changed
+
+- Update @types/node from 24.13.3 to 24.19.2, retaining the Node 24 development
+  typing baseline instead of adopting Node 26 APIs ahead of supported runtimes.
+- Runtime support remains Node >=22.19.0 with the existing Node 22/24 checks.
+
 ## [0.1.1] - 2026-10-25
 
 ### Added
