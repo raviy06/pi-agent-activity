@@ -23,17 +23,41 @@ test("sanitizes text, keeps attention independent and omits unknown metrics", ()
   assert.equal(result.rows[0].text, "Needs attention · Last: read file")
 })
 
-test("retains successes briefly, failures until dismissed, and resurfaces changed observations", () => {
+test("retains successes for 10s, failures for 60s, and resurfaces changed observations", () => {
   const store = new ActivityStore()
   store.apply(parseActivity(dto([entry("completed"), entry("failed", "activity-b")])), 0)
   assert.equal(store.rows(9999).length, 2)
   assert.equal(store.rows(10000).length, 1)
-  assert.equal(store.dismiss("activity-b"), true)
-  assert.equal(store.rows(10000).length, 0)
-  store.apply(parseActivity(dto([entry("completed"), entry("failed", "activity-b")])), 11000)
-  assert.equal(store.rows(11000).length, 0)
-  store.apply(parseActivity(dto([{ ...entry("failed", "activity-b"), activity: { tool: "bash" } }])), 12000)
-  assert.equal(store.rows(12000).length, 1)
+  assert.equal(store.rows(59999).length, 1)
+  assert.equal(store.rows(60000).length, 0)
+})
+
+test("dismissal hides a failure early and only a changed observation resurfaces it", () => {
+  const store = new ActivityStore()
+  store.apply(parseActivity(dto([entry("failed", "activity-c")])), 0)
+  assert.equal(store.dismiss("activity-c"), true)
+  assert.equal(store.rows(1000).length, 0)
+  store.apply(parseActivity(dto([entry("failed", "activity-c")])), 2000)
+  assert.equal(store.rows(2000).length, 0)
+  store.apply(parseActivity(dto([{ ...entry("failed", "activity-c"), activity: { tool: "bash" } }])), 3000)
+  assert.equal(store.rows(3000).length, 1)
+})
+
+test("stopped rows age out like failures; paused and unknown stay until dismissed", () => {
+  const store = new ActivityStore()
+  store.apply(parseActivity(dto([entry("stopped", "s"), entry("paused", "p"), entry("unknown", "u")])), 0)
+  assert.equal(store.rows(59999).length, 3)
+  assert.deepEqual(store.rows(60000).map(row => row.key).sort(), ["p", "u"])
+  assert.deepEqual(store.rows(10 * 60_000).map(row => row.key).sort(), ["p", "u"])
+})
+
+test("a terminal row that changes state restarts its retention window", () => {
+  const store = new ActivityStore()
+  store.apply(parseActivity(dto([entry("completed")])), 0)
+  store.apply(parseActivity(dto([entry("failed")])), 9000)
+  assert.equal(store.rows(10000).length, 1)
+  assert.equal(store.rows(68999).length, 1)
+  assert.equal(store.rows(69000).length, 0)
 })
 
 test("disappearance and provider outage never manufacture completion", () => {

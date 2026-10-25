@@ -37,7 +37,10 @@ transient and reset when the extension runtime is replaced.
 ## State and recovery rules
 
 - Successful completions remain visible for ten seconds from their first local
-  terminal observation; failures/paused/unknown notices remain until dismissed.
+  terminal observation; failures and stops remain for sixty seconds so they are
+  noticed without staying in error colour for the rest of the session. Paused
+  and unknown notices may need the user and remain until dismissed. A row whose
+  terminal state changes restarts its window.
 - The cache is bounded and not a permanent run ledger. A reload can redisplay
   retained owner history because the local display history is intentionally reset.
 - A previously active row missing from a snapshot becomes unknown, never done.
