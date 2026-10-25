@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-25
+
+This batch includes the reviewed dependency and release-workflow updates since
+published version 0.1.1. The companion's read-only runtime behavior is unchanged.
+
+### Tooling
+
+- Update ESLint from 10.11.0 to 10.13.0 and typescript-eslint from 8.70.1 to 8.72.0.
+- Update Node 24 typings from 24.13.3 to 24.19.2 without adopting Node 26 APIs or
+  changing the existing Node 22.19/24 runtime support.
+- Upgrade TypeScript from 5.9.3 to supported 6.0.3. TypeScript 7 remains deferred
+  because it is outside the parser's peer range; no peer constraints are bypassed.
+- Upgrade checkout, setup-node and upload-artifact to v7 while preserving safe
+  checkout defaults, read-only release detection and protected publication.
+
 ### Fixed
 
 - Create GitHub Releases as drafts, upload and verify package assets, then publish
@@ -19,7 +34,8 @@
   grouped versioned notes in a dedicated release PR.
 - Skip publication and npm approval for main pushes without a package-version
   change; verify release intent from successful same-commit main CI before the
-  protected publisher runs. OIDC publication remains unverified end-to-end.
+  protected publisher runs. Successful main CI and protected npm approval remain
+  required; publication uses OIDC provenance and exact-source verification.
 
 ## [0.1.1] - 2026-10-25
 
