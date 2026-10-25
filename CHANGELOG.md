@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.6] - 2026-10-25
+
+### Changed
+
+- Upgrade checkout, setup-node and upload-artifact GitHub Actions to v7.
+- Preserve read-only PR CI, main-only trusted publication, protected npm
+  approval, exact source-commit checks and archived artifact uploads.
+
 ## [0.1.1] - 2026-10-25
 
 ### Added
