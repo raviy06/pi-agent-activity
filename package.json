@@ -1,6 +1,6 @@
 {
   "name": "@raviy06/pi-agent-activity",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "Read-only pi-subagents activity companion for pi-minimal",
