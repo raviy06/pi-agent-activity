@@ -105,3 +105,24 @@ test("unsupported providers surface a diagnostic rather than fabricated idle", a
   assert.match(store.diagnostic ?? "", /activityStatus v1/)
   monitor.dispose()
 })
+
+test("with activityEvents advertised the monitor polls at the idle interval and refreshes on the change event", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] })
+  const store = new ActivityStore()
+  let statusCalls = 0
+  const status = { activity: { version: 1, scope: "current-session", generatedAt: 1, available: true, incomplete: false, omitted: { active: 0, recent: 0, children: 0, scanTruncated: false }, entries: [{ key: "activity-a", agent: "worker", state: "running" }] } }
+  const monitor = new ActivityMonitor({ request: async (method) => {
+    if (method === "ping") return { capabilities: { activityStatus: { version: 1, fields: ["task"] }, activityEvents: { version: 1, event: "subagents:activity:changed" } } }
+    statusCalls++; return status
+  } }, store, () => {}, { activeMs: 10, idleMs: 1000 })
+  monitor.start(); await Promise.resolve(); await Promise.resolve(); await Promise.resolve()
+  assert.equal(statusCalls, 1)
+  assert.equal(monitor.changeEvent, "subagents:activity:changed")
+  t.mock.timers.tick(50); await Promise.resolve(); await Promise.resolve(); await Promise.resolve()
+  assert.equal(statusCalls, 1, "active work does not trigger fast polling when the provider pushes changes")
+  monitor.nudge(); t.mock.timers.tick(250); await Promise.resolve(); await Promise.resolve(); await Promise.resolve()
+  assert.equal(statusCalls, 2, "a change event (nudge) refreshes once")
+  t.mock.timers.tick(1000); await Promise.resolve(); await Promise.resolve(); await Promise.resolve()
+  assert.equal(statusCalls, 3, "the idle interval remains as a safety net")
+  monitor.dispose()
+})

@@ -14,6 +14,21 @@ test("parses only supported scoped snapshots and own usage", () => {
   for (const value of [null, {}, dto([], { version: 2 }), dto([], { scope: "global" }), dto([], { available: "true" }), dto([entry("invented")]), dto([entry(), entry()]), dto([], { omitted: { active: -1 } })]) assert.throws(() => parseActivity(value))
 })
 
+test("shows the task preview and a fallback marker when the fork supplies them (0.83+)", () => {
+  const rich = { ...entry(), task: "  Review   the auth\u001b[31m module  ", model: { requested: "nope/none", effective: "openai/gpt-5-mini", fallbackReason: "unregistered" } }
+  const result = parseActivity(dto([rich]))
+  assert.equal(result.rows[0].text, "Review the auth module · Last: read · ↷ openai/gpt-5-mini (unregistered)")
+  assert.equal(result.rows[0].goal, "Review the auth module")
+  assert.deepEqual(result.rows[0].model, { requested: "nope/none", effective: "openai/gpt-5-mini", fallbackReason: "unregistered" })
+  const plain = parseActivity(dto([{ ...entry(), model: { effective: "openai/gpt-5-mini" } }]))
+  assert.equal(plain.rows[0].text, "Last: read", "an effective model without a fallback adds nothing to the row")
+  const long = parseActivity(dto([{ ...entry(), task: "x".repeat(500) }]))
+  assert.ok(long.rows[0].goal!.length <= 120)
+  assert.ok(long.rows[0].text.length <= 256)
+  assert.equal((long.rows[0] as Record<string, unknown>).task, undefined, "row.task stays free for the host's plan-task link")
+  assert.equal(parseActivity(dto([{ ...entry(), task: 42, model: "bad" }])).rows[0].goal, undefined, "malformed optional fields are ignored, never fatal")
+})
+
 test("sanitizes text, keeps attention independent and omits unknown metrics", () => {
   const input = { ...entry(), agent: "worker\u001b]0;secret\u0007", usage: undefined, activity: { tool: "read\nfile", reason: "needs-attention" } }
   const result = parseActivity(dto([input]))
