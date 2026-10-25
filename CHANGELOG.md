@@ -14,6 +14,10 @@
 
 ### Changed
 
+- Document compatibility with the published `@raviy06/pi-subagents` 0.83.0 (the RPC `ping`/`status` contract this companion uses is unchanged) and the new optional activity fields, change event and run records it can adopt next. Smoke verified against the 0.83.0 bundle.
+
+### Changed
+
 - Failed and stopped child rows now leave the footer sixty seconds after they are
   first observed instead of staying until dismissed. In practice they sat in error
   colour for the rest of the session (observed at 30 minutes) and competed with
