@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.1.2] - 2026-10-25
+## [Unreleased]
 
 ### Fixed
 
@@ -13,11 +13,13 @@
 - Require exactly one nonempty, dated changelog section for the release version,
   handling LF/CRLF and rejecting missing, duplicate or empty notes before publication.
 
-### Release validation
+### Changed
 
-- Prepare the next new-version trusted-publication run after manual bootstrap.
-  Successful main CI and npm-environment approval remain required. No companion
-  runtime or dependency changes; OIDC publication is not yet claimed verified.
+- Ordinary PRs no longer require version bumps or new changelog entries. Prepare
+  grouped versioned notes in a dedicated release PR.
+- Skip publication and npm approval for main pushes without a package-version
+  change; verify release intent from successful same-commit main CI before the
+  protected publisher runs. OIDC publication remains unverified end-to-end.
 
 ## [0.1.1] - 2026-10-25
 

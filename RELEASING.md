@@ -2,10 +2,12 @@
 
 ## PR contract
 
-Every new extension PR must bump the package version. Synchronize `package.json`,
-both root package-lock versions, and a dated CHANGELOG section. The prepared
-version must be newer than the PR base. Only stable `MAJOR.MINOR.PATCH` release
-versions are supported by this initial pipeline. Dependabot PRs also need a bump.
+Ordinary feature, dependency, test and documentation PRs keep the current package
+version and do not require a new changelog entry. Merge reviewed changes, then
+prepare one release PR that bumps `package.json` and both root lockfile versions
+and adds a dated changelog summarizing the batch. Only stable `MAJOR.MINOR.PATCH`
+versions are supported. Unchanged versions pass PR validation; downgrades fail.
+A changed version requires the matching dated changelog entry.
 
 The aggregate **CI** check requires:
 - ESLint, TypeScript checking, unit tests and build on Node 22.19/24 and Windows.
@@ -38,9 +40,18 @@ npm pack ./dist-pkg --ignore-scripts
 
 ## Publishing flow
 
-After **CI succeeds on a push to main**, Publish checks out that exact commit and
-queues an `npm` environment deployment. Manual main-only dispatch supports retry,
-but still verifies successful CI for the exact commit. The publisher reruns
+Main push CI records the push's before/after package versions in a small
+`release-intent` artifact. This compares the whole push, including multi-commit
+or rebase merges, not merely HEAD's first parent. After **CI succeeds**, Publish's
+read-only detection job verifies the CI run identity and recomputes the artifact
+against the exact Git objects. An unchanged version skips the publisher entirely:
+no npm approval request, registry publication or GitHub release.
+
+Only a verified version-changing push queues an `npm` environment deployment.
+Manual main-only dispatch uses the same successful CI run and saved intent; it
+cannot force a release from an ordinary commit. Missing/invalid artifacts fail
+closed. The current-main check still applies: do not advance main while a release
+awaits approval; a superseded release needs a fresh release PR. The publisher reruns
 validation/tests/build, checks scoped package identity, and queries the registry.
 Only HTTP 404 means unpublished; auth/rate/server failures stop the workflow.
 An existing version is not republished. A superseded main commit is rejected,
