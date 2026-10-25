@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.3] - 2026-10-25
+
+### Changed
+
+- Update ESLint from 10.11.0 to 10.13.0 and typescript-eslint from 8.70.1 to
+  8.72.0. Keep the compiler within the parser's declared supported peer range.
+- Runtime code and dependencies are unchanged by this development-tool update.
+
 ## [0.1.1] - 2026-10-25
 
 ### Added
