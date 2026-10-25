@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Failed and stopped child rows now leave the footer sixty seconds after they are
+  first observed instead of staying until dismissed. In practice they sat in error
+  colour for the rest of the session (observed at 30 minutes) and competed with
+  live failures. Successful completions still clear after ten seconds; paused and
+  unknown rows still remain until dismissed because they may need the user.
+  `/activity dismiss` continues to hide any finished row early.
+
 ## [0.2.0] - 2026-10-25
 
 This batch includes the reviewed dependency and release-workflow updates since

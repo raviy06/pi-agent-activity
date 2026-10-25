@@ -3,6 +3,15 @@ import { live, type Projection, type Row } from "./projection.js"
 type Entry = { row: Row; terminalAt?: number; signature: string }
 const signature = (row: Row) => JSON.stringify([row.agent, row.state, row.text])
 
+/**
+ * How long a finished row stays in the footer after its first local terminal observation.
+ * Successes are quick confirmations; failures and stops get longer so they are noticed, but
+ * they still age out instead of sitting in error colour for the rest of the session.
+ * Paused and unknown rows have no window: they may need the user and stay until dismissed.
+ */
+export const RETENTION_MS: Partial<Record<Row["state"], number>> = { completed: 10_000, failed: 60_000, stopped: 60_000 }
+const retention = (state: Row["state"]) => RETENTION_MS[state]
+
 /** Transient session view only. Never updates provider execution or task state. */
 export class ActivityStore {
   private entries = new Map<string, Entry>()
@@ -20,7 +29,11 @@ export class ActivityStore {
     const next = new Map<string, Entry>()
     for (const row of projection.rows) {
       const previous = this.entries.get(row.key)
-      next.set(row.key, { row, signature: signature(row), terminalAt: row.state === "completed" ? previous?.terminalAt ?? now : undefined })
+      const timed = retention(row.state) !== undefined
+      // Keep the first terminal timestamp only while the state stays the same, so a row that moves
+      // from completed to failed (or back) restarts its window.
+      const sameState = previous?.row.state === row.state
+      next.set(row.key, { row, signature: signature(row), terminalAt: timed ? (sameState ? previous?.terminalAt : undefined) ?? now : undefined })
     }
     for (const [key, previous] of this.entries) {
       if (next.has(key)) continue
@@ -40,7 +53,8 @@ export class ActivityStore {
   private visible(now = Date.now()): Row[] {
     return [...this.entries.values()].filter(entry => {
       if (this.dismissed.get(entry.row.key) === entry.signature) return false
-      return entry.terminalAt === undefined || now - entry.terminalAt < 10000
+      const window = retention(entry.row.state)
+      return entry.terminalAt === undefined || window === undefined || now - entry.terminalAt < window
     }).map(entry => {
       const row = { ...entry.row, metrics: { ...entry.row.metrics } }
       if (this.error && live(row.state)) { row.state = "unknown"; row.text = "Provider unavailable · last known activity retained" }
