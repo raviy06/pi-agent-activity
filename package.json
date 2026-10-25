@@ -1,6 +1,6 @@
 {
   "name": "@raviy06/pi-agent-activity",
-  "version": "0.1.1",
+  "version": "0.1.5",
   "private": true,
   "type": "module",
   "description": "Read-only pi-subagents activity companion for pi-minimal",
@@ -38,7 +38,7 @@
     "@eslint/js": "10.0.1",
     "@types/node": "24.13.3",
     "eslint": "10.11.0",
-    "typescript": "7.0.2",
+    "typescript": "6.0.3",
     "typescript-eslint": "8.70.1"
   }
 }

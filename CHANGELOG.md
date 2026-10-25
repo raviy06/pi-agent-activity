@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.1.5] - 2026-10-25
+
+### Changed
+
+- Upgrade the development TypeScript compiler from 5.9.3 to 6.0.3, the supported
+  6.0 line within typescript-eslint's >=4.8.4 <6.1.0 peer range.
+- Defer the originally proposed TypeScript 7 upgrade rather than forcing an
+  incompatible install or bypassing peer-dependency checks.
+
 ## [0.1.1] - 2026-10-25
 
 ### Added
