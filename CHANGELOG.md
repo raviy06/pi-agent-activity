@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-25
 ### Added
 
 - Rows show the child's task preview (fork `activityStatus` `task`, 0.83+) and a `↷ <model> (<reason>)`
@@ -14,10 +15,12 @@
 
 ### Changed
 
-- Document compatibility with the published `@raviy06/pi-subagents` 0.83.0 (the RPC `ping`/`status` contract this companion uses is unchanged) and the new optional activity fields, change event and run records it can adopt next. Smoke verified against the 0.83.0 bundle.
+Failed and stopped child rows now clear from the footer, and the companion is
+verified against `@raviy06/pi-subagents` 0.83.0.
 
 ### Changed
 
+- Document compatibility with the published `@raviy06/pi-subagents` 0.83.0 (the RPC `ping`/`status` contract this companion uses is unchanged) and the new optional activity fields, change event and run records it can adopt next. Smoke verified against the 0.83.0 bundle.
 - Failed and stopped child rows now leave the footer sixty seconds after they are
   first observed instead of staying until dismissed. In practice they sat in error
   colour for the rest of the session (observed at 30 minutes) and competed with
