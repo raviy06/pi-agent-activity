@@ -51,7 +51,10 @@ With environment approval, npm trusted publishing issues a short-lived token via
 GitHub OIDC. Publication uses `--provenance --access public`. The GitHub release
 is created as a **draft** with the exact version's nonempty changelog, then the
 package tarball is uploaded and its name/state/size/SHA-256 verified before the
-release is made public. This order supports GitHub's immutable releases. Write/id-token permissions exist
+release is made public. Existing remote tags are resolved to their actual commit
+(peeling annotated tags), checked before publication and verified again afterward.
+Creation metadata alone is not source proof. Mismatches stop without retagging.
+This order supports GitHub's immutable releases. Write/id-token permissions exist
 only in the main-only publish job. No registry-url placeholder npm token is used.
 
 A failed publication can be retried from main after correcting account setup. If
