@@ -48,13 +48,18 @@ and a new publication must be newer than npm's current `latest` version, so
 out-of-order CI completions cannot downgrade the npm dist-tag.
 
 With environment approval, npm trusted publishing issues a short-lived token via
-GitHub OIDC. Publication uses `--provenance --access public`, then creates the
-`v<version>` GitHub release and uploads a tarball. Write/id-token permissions exist
+GitHub OIDC. Publication uses `--provenance --access public`. The GitHub release
+is created as a **draft** with the exact version's nonempty changelog, then the
+package tarball is uploaded and its name/state/size/SHA-256 verified before the
+release is made public. This order supports GitHub's immutable releases. Write/id-token permissions exist
 only in the main-only publish job. No registry-url placeholder npm token is used.
 
 A failed publication can be retried from main after correcting account setup. If
-npm accepted the version but GitHub release creation failed, a retry skips npm
-and finishes release metadata. Never overwrite a published version.
+npm accepted the version but GitHub draft creation/upload failed, a retry skips
+npm and resumes the matching draft. A complete published release is verified
+without mutation. An already-published immutable release with missing assets
+cannot be repaired by uploading afterward: leave it intact and create a new
+version. Never delete/retag an immutable release or overwrite a published version.
 
 ## Required owner setup
 
