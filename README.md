@@ -8,8 +8,11 @@ artifact is built separately. Publication status must be verified on npm.
 
 - Pi >=1.4.0.
 - Pi-minimal >=0.2.3 with its activity footer slot.
-- The locally prepared `@raviy06/pi-subagents@0.81.1` fork, advertising
-  `activityStatus: { version: 1 }`. The upstream 0.81.0 API is insufficient.
+- `@raviy06/pi-subagents` 0.81.1 or newer, advertising `activityStatus: { version: 1 }`.
+  With 0.83.0 or newer the companion shows each child's task preview and a
+  `↷ <model> (<reason>)` marker when a configured fallback model was used, and it
+  subscribes to the provider's `subagents:activity:changed` event so refreshes are
+  event-driven; polling then runs only at the idle interval as a safety net.
 
 The package uses public event contracts, not private imports into either owner.
 It never replaces the footer, spawns/stops agents, updates tasks, or edits another

@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+### Added
+
+- Rows show the child's task preview (fork `activityStatus` `task`, 0.83+) and a `↷ <model> (<reason>)`
+  marker when the fork reports a resolution-time model fallback. Both are optional and ignored
+  when absent or malformed. The preview is kept on `row.goal`; `row.task` stays reserved for
+  pi-minimal's plan-task link, and composed text stays within the host's 256-character bound.
+- When `ping.capabilities.activityEvents` is advertised, the monitor subscribes to the named
+  change event and polls only at the idle interval as a safety net, instead of every 2 s while
+  work is active.
+
 ### Changed
 
 - Failed and stopped child rows now leave the footer sixty seconds after they are

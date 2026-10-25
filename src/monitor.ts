@@ -8,10 +8,12 @@ export class ActivityMonitor {
   private started = false
   private busy = false
   private capable = false
+  /** Fork 0.83+: the provider pushes `subagents:activity:changed`; polling then only runs at the idle interval as a safety net. */
+  changeEvent?: string
   private hintPending = false
   private timer?: ReturnType<typeof setTimeout>
   constructor(private rpc: Reader, private store: ActivityStore, private changed: () => void,
-    private intervals = { activeMs: 2000, idleMs: 10000 }) {}
+    private intervals = { activeMs: 2000, idleMs: 10000 }, private onCapabilities?: (changeEvent: string | undefined) => void) {}
   start(): void { if (!this.started) { this.started = true; void this.refresh() } }
   nudge(): void {
     if (this.stopped || this.busy || !this.started || this.hintPending) return
@@ -30,6 +32,9 @@ export class ActivityMonitor {
         if (this.stopped) return
         this.capable = record(ping) && record(ping.capabilities) && record(ping.capabilities.activityStatus) && ping.capabilities.activityStatus.version === 1
         if (!this.capable) throw Error("Provider requires activityStatus v1 (scoped pi-subagents fork)")
+        const events = record(ping) && record(ping.capabilities) && record(ping.capabilities.activityEvents) ? ping.capabilities.activityEvents : undefined
+        this.changeEvent = events && events.version === 1 && typeof events.event === "string" && /^[A-Za-z0-9:_.-]{1,128}$/.test(events.event) ? events.event : undefined
+        this.onCapabilities?.(this.changeEvent)
       }
       const status = await this.rpc.request("status")
       if (this.stopped) return
@@ -44,7 +49,7 @@ export class ActivityMonitor {
       this.busy = false
       if (!this.stopped) {
         this.changed()
-        this.timer = setTimeout(() => { void this.refresh() }, this.store.hasActive ? this.intervals.activeMs : this.intervals.idleMs)
+        this.timer = setTimeout(() => { void this.refresh() }, this.store.hasActive && !this.changeEvent ? this.intervals.activeMs : this.intervals.idleMs)
       }
     }
   }
