@@ -1,13 +1,25 @@
 # Changelog
 
-## [0.1.5] - 2026-10-25
+## [Unreleased]
+
+### Fixed
+
+- Create GitHub Releases as drafts, upload and verify package assets, then publish
+  them. This avoids HTTP 422 when immutable releases reject post-publication uploads.
+- Verify asset name, upload state, size and SHA-256 digest before finalization;
+  resume matching drafts safely and avoid modifying published immutable releases.
+- Resolve actual lightweight/annotated tag commits before and after publication;
+  reject source mismatches without retagging instead of trusting creation metadata.
+- Require exactly one nonempty, dated changelog section for the release version,
+  handling LF/CRLF and rejecting missing, duplicate or empty notes before publication.
 
 ### Changed
 
-- Upgrade the development TypeScript compiler from 5.9.3 to 6.0.3, the supported
-  6.0 line within typescript-eslint's >=4.8.4 <6.1.0 peer range.
-- Defer the originally proposed TypeScript 7 upgrade rather than forcing an
-  incompatible install or bypassing peer-dependency checks.
+- Ordinary PRs no longer require version bumps or new changelog entries. Prepare
+  grouped versioned notes in a dedicated release PR.
+- Skip publication and npm approval for main pushes without a package-version
+  change; verify release intent from successful same-commit main CI before the
+  protected publisher runs. OIDC publication remains unverified end-to-end.
 
 ## [0.1.1] - 2026-10-25
 
