@@ -45,20 +45,20 @@ Main push CI records the push's before/after package versions in a small
 or rebase merges, not merely HEAD's first parent. After **CI succeeds**, Publish's
 read-only detection job verifies the CI run identity and recomputes the artifact
 against the exact Git objects. An unchanged version skips the publisher entirely:
-no npm approval request, registry publication or GitHub release.
+no registry publication or GitHub release.
 
 Only a verified version-changing push queues an `npm` environment deployment.
 Manual main-only dispatch uses the same successful CI run and saved intent; it
 cannot force a release from an ordinary commit. Missing/invalid artifacts fail
 closed. The current-main check still applies: do not advance main while a release
-awaits approval; a superseded release needs a fresh release PR. The publisher reruns
+is publishing; a superseded release needs a fresh release PR. The publisher reruns
 validation/tests/build, checks scoped package identity, and queries the registry.
 Only HTTP 404 means unpublished; auth/rate/server failures stop the workflow.
 An existing version is not republished. A superseded main commit is rejected,
 and a new publication must be newer than npm's current `latest` version, so
 out-of-order CI completions cannot downgrade the npm dist-tag.
 
-With environment approval, npm trusted publishing issues a short-lived token via
+Inside the `npm` environment (main-only, no reviewer gate), npm trusted publishing issues a short-lived token via
 GitHub OIDC. Publication uses `--provenance --access public`. The GitHub release
 is created as a **draft** with the exact version's nonempty changelog, then the
 package tarball is uploaded and its name/state/size/SHA-256 verified before the
@@ -86,9 +86,9 @@ These are account settings, not granted by workflow YAML:
    - Repository: `pi-agent-activity`
    - Workflow filename: `release.yml`
    - Environment: `npm`
-3. Protect GitHub environment `npm` with an owner reviewer and main-only deployment.
-4. Merge only after CI/review; approve the pending release deployment once npm is
-   configured. Do not bypass the failed check or expose a long-lived npm token.
+3. Restrict GitHub environment `npm` to main-only deployment. There is no reviewer
+   gate: a version-changing push to main publishes unattended.
+4. Merge only after CI/review. Do not bypass the failed check or expose a long-lived npm token.
 
 No workflow was dispatched and no package was published merely by adding these
 files. Local source visibility is public; source `private: true` prevents
