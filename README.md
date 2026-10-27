@@ -8,7 +8,7 @@ artifact is built separately. Publication status must be verified on npm.
 
 - Pi >=1.4.0.
 - Pi-minimal >=0.2.3 with its activity footer slot.
-- `@raviy06/pi-subagents` 0.81.1 or newer (published; 0.83.0 current), advertising
+- `@raviy06/pi-subagents` 0.81.1 or newer (published; 0.85.0 current), advertising
   `activityStatus: { version: 1 }`. Upstream `pi-subagents` does not expose this API.
   From fork 0.83.0 the snapshot also carries optional `task`, `startedAt` and `model`
   fields (`ping.capabilities.activityStatus.fields`), emits `subagents:activity:changed`
