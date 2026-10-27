@@ -15,7 +15,7 @@ function fixture(mode = "tui") {
   })
   emitter.on("subagents:rpc:v1:request", request => {
     requests.push(request.method)
-    const data = request.method === "ping" ? { capabilities: { activityStatus: { version: 1 } } } : { activity: { version: 1, scope: "current-session", generatedAt: 1, available: true, incomplete: false, omitted: { active: 0, recent: 0, children: 0, scanTruncated: false }, entries: [{ key: "worker", agent: "worker", state: "running", activity: { tool: "read" }, elapsedMs: 1000, usage: { input: 20, output: 5, source: "reported-own" } }] } }
+    const data = request.method === "ping" ? { capabilities: { activityStatus: { version: 1 }, activityEvents: { version: 1, event: "subagents:activity:changed" } }, events: { jobsChanged: "subagent:jobs-changed" } } : { activity: { version: 1, scope: "current-session", generatedAt: 1, available: true, incomplete: false, omitted: { active: 0, recent: 0, children: 0, scanTruncated: false }, entries: [{ key: "worker", agent: "worker", state: "running", activity: { tool: "read" }, elapsedMs: 1000, usage: { input: 20, output: 5, source: "reported-own" } }] } }
     events.emit(`subagents:rpc:v1:reply:${request.requestId}`, { version: 1, requestId: request.requestId, success: true, data })
   })
   const pi = { events, on: (name: string, handler: Function) => { handlers.set(name, handler) }, registerCommand: (name: string, command: unknown) => { commands.set(name, command) } } as unknown as ExtensionAPI
@@ -50,4 +50,20 @@ test("non-TUI sessions do not register with the footer or poll providers", async
   assert.deepEqual(f.requests, [])
   assert.deepEqual(f.rows, [])
   f.handlers.get("session_shutdown")!({}, f.ctx)
+})
+
+test("advertised change hints trigger a status refresh and are released on shutdown", async () => {
+  const f = fixture()
+  f.handlers.get("session_start")!({}, f.ctx)
+  await new Promise(resolve => setImmediate(resolve))
+  assert.deepEqual(f.requests, ["ping", "status"])
+  for (const event of ["subagent:jobs-changed", "subagents:activity:changed"]) {
+    const before = f.requests.length
+    f.emitter.emit(event, { version: 1 })
+    await new Promise(resolve => setTimeout(resolve, 300))
+    assert.deepEqual(f.requests.slice(before), ["status"], event)
+  }
+  f.handlers.get("session_shutdown")!({}, f.ctx)
+  assert.equal(f.emitter.listenerCount("subagent:jobs-changed"), 0)
+  assert.equal(f.emitter.listenerCount("subagents:activity:changed"), 0)
 })

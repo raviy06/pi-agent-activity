@@ -105,3 +105,32 @@ test("unsupported providers surface a diagnostic rather than fabricated idle", a
   assert.match(store.diagnostic ?? "", /activityStatus v1/)
   monitor.dispose()
 })
+
+const hintedPing = { capabilities: { activityStatus: { version: 1 }, activityEvents: { version: 1, event: "subagents:activity:changed" } }, events: { ready: "subagents:rpc:v1:ready", request: "subagents:rpc:v1:request", replyPrefix: "subagents:rpc:v1:reply:", childStatus: "subagent:child-status", asyncStarted: "subagent:async-started", asyncComplete: "subagent:async-complete", processTerminal: "subagent:process-terminal", jobsChanged: "subagent:jobs-changed" } }
+
+test("monitor discovers change hints from ping and relaxes polling when it has them", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] })
+  const store = new ActivityStore(); let calls = 0; const hinted: string[][] = []
+  const rpc = { request: async (method: "ping" | "status") => { calls++; return method === "ping" ? hintedPing : status } }
+  const monitor = new ActivityMonitor(rpc, store, () => {}, { activeMs: 10, idleMs: 20, hintedActiveMs: 100, hintedIdleMs: 200 }, names => hinted.push(names))
+  monitor.start(); await new Promise(resolve => setImmediate(resolve))
+  assert.deepEqual(hinted, [["subagents:activity:changed", "subagent:child-status", "subagent:async-started", "subagent:async-complete", "subagent:process-terminal", "subagent:jobs-changed"]])
+  assert.equal(calls, 2)
+  t.mock.timers.tick(20); await new Promise(resolve => setImmediate(resolve))
+  assert.equal(calls, 2, "the fast idle interval no longer applies once hints are discovered")
+  t.mock.timers.tick(180); await new Promise(resolve => setImmediate(resolve))
+  assert.equal(calls, 3)
+  monitor.dispose()
+})
+
+test("monitor ignores malformed hint advertisements and keeps the fast poll", async (t) => {
+  t.mock.timers.enable({ apis: ["setTimeout"] })
+  const store = new ActivityStore(); let calls = 0; const hinted: string[][] = []
+  const ping = { capabilities: { activityStatus: { version: 1 }, activityEvents: { version: 1, event: 42 } }, events: { jobsChanged: "", childStatus: "x".repeat(200), request: "subagents:rpc:v1:request" } }
+  const monitor = new ActivityMonitor({ request: async method => { calls++; return method === "ping" ? ping : status } }, store, () => {}, { activeMs: 10, idleMs: 20, hintedActiveMs: 100, hintedIdleMs: 200 }, names => hinted.push(names))
+  monitor.start(); await new Promise(resolve => setImmediate(resolve))
+  assert.deepEqual(hinted, [])
+  t.mock.timers.tick(20); await new Promise(resolve => setImmediate(resolve))
+  assert.equal(calls, 3)
+  monitor.dispose()
+})

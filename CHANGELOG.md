@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Refreshes are now event-driven. After the capability `ping`, the companion subscribes to every change hint the provider advertises in that reply: the fork's coalesced `subagents:activity:changed` (`capabilities.activityEvents.event`) and the `events.childStatus`, `asyncStarted`, `asyncComplete`, `processTerminal` and `jobsChanged` names, the last added by upstream pi-subagents 0.83.0 (#3070). Names come from the reply, not a hardcoded list, so a renamed event cannot silently stop refreshes; malformed advertisements are ignored. With hints available the poll becomes a safety net at 10 s (active) / 30 s (idle) instead of 2 s / 10 s; without them the old cadence stays. Hints still only schedule a coalesced read of `status`; they never supply rows.
+
 ## [0.2.1] - 2026-10-25
 
 Failed and stopped child rows now clear from the footer, and the companion is

@@ -34,8 +34,12 @@ export default function activityExtension(pi: ExtensionAPI): void {
       })
       footer.publish({ rows, omitted, format, motion })
     }
-    const monitor = new ActivityMonitor(rpc, store, render)
-    const off = ["subagents:rpc:v1:ready", "subagent:child-status", "subagent:async-complete"].map(event => pi.events.on(event, () => monitor.nudge()))
+    // Bootstrap hints are the stable transport-ready and lifecycle names; the provider's ping reply adds the rest
+    // (upstream `subagent:jobs-changed`, the fork's coalesced `subagents:activity:changed`) once it is reachable.
+    const off = new Map<string, () => void>()
+    const listen = (names: string[]) => { for (const name of names) if (!off.has(name)) off.set(name, pi.events.on(name, () => monitor.nudge())) }
+    const monitor: ActivityMonitor = new ActivityMonitor(rpc, store, render, undefined, names => { if (alive) listen(names) })
+    listen(["subagents:rpc:v1:ready", "subagent:child-status", "subagent:async-complete"])
     active = {
       id, store, footer, monitor, render,
       togglePlain() { format = format === "icons" ? "plain" : "icons"; render() },
@@ -43,7 +47,8 @@ export default function activityExtension(pi: ExtensionAPI): void {
       dispose() {
         if (!alive) return
         alive = false; monitor.dispose(); rpc.dispose()
-        for (const unsubscribe of off) unsubscribe()
+        for (const unsubscribe of off.values()) unsubscribe()
+        off.clear()
         footer.dispose()
       },
     }

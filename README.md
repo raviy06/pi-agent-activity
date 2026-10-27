@@ -12,9 +12,11 @@ artifact is built separately. Publication status must be verified on npm.
   `activityStatus: { version: 1 }`. Upstream `pi-subagents` does not expose this API.
   From fork 0.83.0 the snapshot also carries optional `task`, `startedAt` and `model`
   fields (`ping.capabilities.activityStatus.fields`), emits `subagents:activity:changed`
-  so this companion can refresh on demand instead of polling, and appends
-  `subagents:record` session entries; adopting those is a planned companion change
-  and does not affect the current read-only `ping`/`status` contract.
+  and appends `subagents:record` session entries. This companion subscribes to
+  that event, and to the lifecycle and `subagent:jobs-changed` names the provider
+  lists under `ping.events` (upstream pi-subagents 0.83.0+), so it refreshes on
+  demand; polling remains only as a slow safety net. The read-only `ping`/`status`
+  contract is unchanged.
 
 The package uses public event contracts, not private imports into either owner.
 It never replaces the footer, spawns/stops agents, updates tasks, or edits another
@@ -59,10 +61,11 @@ transient and reset when the extension runtime is replaced.
 
 ## Performance and lifecycle
 
-One request chain at a time, with 3-second RPC deadlines. Poll every 2 seconds
-while tracked work is active, otherwise every 10 seconds. Lifecycle events only
-hint a 250ms coalesced refresh; they never supply authoritative rows or trigger
-model turns. Rendering/spinner frames never make provider requests.
+One request chain at a time, with 3-second RPC deadlines. Change events
+advertised in the provider's `ping` reply hint a 250ms coalesced refresh; they
+never supply authoritative rows or trigger model turns. With such hints the poll
+is a safety net every 10 seconds while tracked work is active, otherwise every
+30 seconds; a provider that advertises none is polled every 2 / 10 seconds. Rendering/spinner frames never make provider requests.
 
 Footer publications are skipped when unchanged. Exact-session host registration
 supports either extension load order, missing readiness notifications, stale
